@@ -1,0 +1,191 @@
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+import { Trash2, Minus, Plus, ShoppingBag, ArrowRight } from 'lucide-react';
+import Layout from '@/components/layout/Layout';
+import { Button } from '@/components/ui/button';
+import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import { getProductImage } from '@/lib/productImages';
+import { toast } from 'sonner';
+
+const Cart: React.FC = () => {
+  const { items, updateQuantity, removeFromCart, total, clearCart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleCheckout = () => {
+    if (!isAuthenticated) {
+      toast.info('Please sign in to checkout');
+      navigate('/auth?redirect=/cart');
+      return;
+    }
+    // Proceed to checkout
+    toast.success('Order placed successfully!');
+    clearCart();
+    navigate('/orders');
+  };
+
+  if (items.length === 0) {
+    return (
+      <Layout>
+        <Helmet>
+          <title>Shopping Cart | MiniWheels</title>
+        </Helmet>
+        <div className="container mx-auto px-4 py-20 text-center">
+          <ShoppingBag className="w-24 h-24 mx-auto mb-6 text-muted-foreground" />
+          <h1 className="section-title text-4xl mb-4">YOUR CART IS EMPTY</h1>
+          <p className="text-muted-foreground mb-8">
+            Looks like you haven't added any items to your cart yet.
+          </p>
+          <Link to="/products">
+            <Button variant="hero" size="xl">
+              Start Shopping
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+          </Link>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <>
+      <Helmet>
+        <title>Shopping Cart ({items.length} items) | MiniWheels</title>
+      </Helmet>
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="section-title text-4xl md:text-5xl mb-8">SHOPPING CART</h1>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Cart Items */}
+            <div className="lg:col-span-2 space-y-4">
+              {items.map((item) => {
+                const discountedPrice = item.product.price * (1 - item.product.discount_percentage / 100);
+                const hasDiscount = item.product.discount_percentage > 0;
+
+                return (
+                  <div key={item.product.id} className="card-gradient rounded-xl p-4 flex gap-4">
+                    {/* Image */}
+                    <Link to={`/products/${item.product.id}`} className="w-24 h-24 rounded-lg overflow-hidden shrink-0">
+                      <img
+                        src={getProductImage(item.product.product_model)}
+                        alt={item.product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </Link>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <Link to={`/products/${item.product.id}`}>
+                        <h3 className="font-semibold hover:text-primary transition-colors truncate">
+                          {item.product.name}
+                        </h3>
+                      </Link>
+                      <p className="text-sm text-muted-foreground">{item.product.product_model}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {hasDiscount && (
+                          <span className="text-sm line-through text-muted-foreground">
+                            ${item.product.price.toFixed(2)}
+                          </span>
+                        )}
+                        <span className="font-bold text-primary">${discountedPrice.toFixed(2)}</span>
+                      </div>
+
+                      {/* Quantity Controls */}
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            className="w-8 h-8 rounded bg-secondary flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            className="w-8 h-8 rounded bg-secondary flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          <span className="font-bold">
+                            ${(discountedPrice * item.quantity).toFixed(2)}
+                          </span>
+                          <button
+                            onClick={() => {
+                              removeFromCart(item.product.id);
+                              toast.success('Item removed from cart');
+                            }}
+                            className="p-2 text-destructive hover:bg-destructive/10 rounded transition-colors"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <button
+                onClick={() => {
+                  clearCart();
+                  toast.success('Cart cleared');
+                }}
+                className="text-sm text-destructive hover:underline"
+              >
+                Clear all items
+              </button>
+            </div>
+
+            {/* Order Summary */}
+            <div className="lg:col-span-1">
+              <div className="card-gradient rounded-xl p-6 sticky top-24">
+                <h2 className="font-heading text-2xl mb-6">ORDER SUMMARY</h2>
+
+                <div className="space-y-3 mb-6">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>${total.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Shipping</span>
+                    <span className="text-green-500">{total >= 100 ? 'FREE' : '$9.99'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Tax (estimated)</span>
+                    <span>${(total * 0.08).toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="border-t border-border pt-4 mb-6">
+                  <div className="flex justify-between items-center">
+                    <span className="font-heading text-xl">TOTAL</span>
+                    <span className="text-2xl font-bold text-primary">
+                      ${(total + (total >= 100 ? 0 : 9.99) + total * 0.08).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                <Button variant="hero" size="xl" className="w-full" onClick={handleCheckout}>
+                  {isAuthenticated ? 'Checkout' : 'Sign In to Checkout'}
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
+
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  {total < 100 && `Add $${(100 - total).toFixed(2)} more for free shipping!`}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    </>
+  );
+};
+
+export default Cart;
