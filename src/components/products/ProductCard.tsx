@@ -13,14 +13,20 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
-  
-  const discountedPrice = product.price * (1 - product.discount_percentage / 100);
-  const hasDiscount = product.discount_percentage > 0;
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  // Convert price to number in case API returns it as string
+  const price = Number(product.price);
+  const discountPercentage = Number(product.discount_percentage);
+  const discountedPrice = price * (1 - discountPercentage / 100);
+  const hasDiscount = discountPercentage > 0;
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
-    addToCart(product, 1);
-    toast.success(`${product.name} added to cart!`);
+    try {
+      await addToCart(product, 1);
+    } catch (error) {
+      // Error is handled in the context
+    }
   };
 
   return (
@@ -29,7 +35,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Discount Badge */}
         {hasDiscount && (
           <div className="discount-badge">
-            -{product.discount_percentage}%
+            -{discountPercentage}%
           </div>
         )}
 
@@ -48,7 +54,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          
+
           {/* Quick Actions */}
           <div className="absolute bottom-4 left-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0">
             <Button variant="glass" size="sm" className="flex-1" onClick={handleAddToCart}>
@@ -68,10 +74,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {product.name}
           </h3>
           <p className="text-sm text-muted-foreground">{product.product_dimension}</p>
-          
+
           <div className="flex items-center gap-2 pt-2">
             {hasDiscount && (
-              <span className="price-original">${product.price.toFixed(2)}</span>
+              <span className="price-original">${price.toFixed(2)}</span>
             )}
             <span className={hasDiscount ? 'price-discounted' : 'text-xl font-bold text-primary'}>
               ${discountedPrice.toFixed(2)}

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Trash2, Minus, Plus, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, RefreshCw } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
@@ -10,9 +10,23 @@ import { getProductImage } from '@/lib/productImages';
 import { toast } from 'sonner';
 
 const Cart: React.FC = () => {
-  const { items, updateQuantity, removeFromCart, total, clearCart } = useCart();
+  const { items, updateQuantity, removeFromCart, total, clearCart, isLoading, refreshCart } = useCart();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/auth?redirect=/cart');
+      return;
+    }
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshCart();
+    }
+  }, [isAuthenticated, refreshCart]);
 
   const handleCheckout = () => {
     if (!isAuthenticated) {
@@ -26,7 +40,18 @@ const Cart: React.FC = () => {
     navigate('/orders');
   };
 
-  if (items.length === 0) {
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-20 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading cart...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!items || items.length === 0) {
     return (
       <Layout>
         <Helmet>
@@ -52,18 +77,37 @@ const Cart: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Shopping Cart ({items.length} items) | MiniWheels</title>
+        <title>Shopping Cart | MiniWheels</title>
       </Helmet>
       <Layout>
         <div className="container mx-auto px-4 py-8">
-          <h1 className="section-title text-4xl md:text-5xl mb-8">SHOPPING CART</h1>
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="section-title text-4xl md:text-5xl">SHOPPING CART</h1>
+            <Button 
+              variant="outline" 
+              onClick={refreshCart} 
+              disabled={isLoading}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
-              {items.map((item) => {
-                const discountedPrice = item.product.price * (1 - item.product.discount_percentage / 100);
-                const hasDiscount = item.product.discount_percentage > 0;
+              {items.filter(item => item && item.product).map((item) => {
+                // Defensive check for item and product data
+                if (!item || !item.product) {
+                  console.warn('Invalid cart item:', item);
+                  return null;
+                }
+                
+                const price = Number(item.product.price || 0);
+                const discountPercentage = Number(item.product.discount_percentage || 0);
+                const discountedPrice = price * (1 - discountPercentage / 100);
+                const hasDiscount = discountPercentage > 0;
 
                 return (
                   <div key={item.product.id} className="card-gradient rounded-xl p-4 flex gap-4">
@@ -80,14 +124,14 @@ const Cart: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <Link to={`/products/${item.product.id}`}>
                         <h3 className="font-semibold hover:text-primary transition-colors truncate">
-                          {item.product.name}
+                          {item.product.name || 'Unknown Product'}
                         </h3>
                       </Link>
-                      <p className="text-sm text-muted-foreground">{item.product.product_model}</p>
+                      <p className="text-sm text-muted-foreground">{item.product.product_model || 'Unknown Model'}</p>
                       <div className="flex items-center gap-2 mt-1">
                         {hasDiscount && (
                           <span className="text-sm line-through text-muted-foreground">
-                            ${item.product.price.toFixed(2)}
+                            ${price.toFixed(2)}
                           </span>
                         )}
                         <span className="font-bold text-primary">${discountedPrice.toFixed(2)}</span>
@@ -97,14 +141,26 @@ const Cart: React.FC = () => {
                       <div className="flex items-center justify-between mt-3">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            onClick={async () => {
+                              try {
+                                await updateQuantity(item.product.id, item.quantity - 1);
+                              } catch (error) {
+                                // Error is handled in the context
+                              }
+                            }}
                             className="w-8 h-8 rounded bg-secondary flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
                           <span className="w-8 text-center font-semibold">{item.quantity}</span>
                           <button
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            onClick={async () => {
+                              try {
+                                await updateQuantity(item.product.id, item.quantity + 1);
+                              } catch (error) {
+                                // Error is handled in the context
+                              }
+                            }}
                             className="w-8 h-8 rounded bg-secondary flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
                           >
                             <Plus className="w-4 h-4" />
@@ -116,9 +172,12 @@ const Cart: React.FC = () => {
                             ${(discountedPrice * item.quantity).toFixed(2)}
                           </span>
                           <button
-                            onClick={() => {
-                              removeFromCart(item.product.id);
-                              toast.success('Item removed from cart');
+                            onClick={async () => {
+                              try {
+                                await removeFromCart(item.product.id);
+                              } catch (error) {
+                                // Error is handled in the context
+                              }
                             }}
                             className="p-2 text-destructive hover:bg-destructive/10 rounded transition-colors"
                           >
@@ -132,9 +191,12 @@ const Cart: React.FC = () => {
               })}
 
               <button
-                onClick={() => {
-                  clearCart();
-                  toast.success('Cart cleared');
+                onClick={async () => {
+                  try {
+                    await clearCart();
+                  } catch (error) {
+                    // Error is handled in the context
+                  }
                 }}
                 className="text-sm text-destructive hover:underline"
               >

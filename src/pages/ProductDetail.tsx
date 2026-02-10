@@ -42,31 +42,40 @@ const ProductDetail: React.FC = () => {
     );
   }
 
-  const discountedPrice = product.price * (1 - product.discount_percentage / 100);
-  const hasDiscount = product.discount_percentage > 0;
+  const price = Number(product.price);
+  const discountPercentage = Number(product.discount_percentage);
+  const discountedPrice = price * (1 - discountPercentage / 100);
+  const hasDiscount = discountPercentage > 0;
   const productImage = getProductImage(product.product_model);
 
   // Mock multiple images
   const images = [productImage, productImage, productImage];
 
-  const handleAddToCart = () => {
-    addToCart(product, quantity);
-    toast.success(`${quantity} x ${product.name} added to cart!`);
+  const handleAddToCart = async () => {
+    try {
+      await addToCart(product, quantity);
+    } catch (error) {
+      // Error is handled in the context
+    }
   };
 
-  const handleBuyNow = () => {
-    addToCart(product, quantity);
-    navigate('/cart');
+  const handleBuyNow = async () => {
+    try {
+      await addToCart(product, quantity);
+      navigate('/cart');
+    } catch (error) {
+      // Error is handled in the context
+    }
   };
 
   return (
     <>
       <Helmet>
-        <title>{product.name} | MiniWheels Diecast Cars</title>
-        <meta name="description" content={product.description} />
-        <meta name="keywords" content={`${product.product_model} diecast, ${product.name}, 1:18 scale model, ${product.product_model} model car, diecast collectible`} />
-        <meta property="og:title" content={product.name} />
-        <meta property="og:description" content={product.description} />
+        <title>Product Detail | MiniWheels Diecast Cars</title>
+        <meta name="description" content="Product details for MiniWheels diecast cars" />
+        <meta name="keywords" content="diecast cars, model cars, 1:18 scale, diecast collectible" />
+        <meta property="og:title" content="Product Detail" />
+        <meta property="og:description" content="Product details for MiniWheels diecast cars" />
       </Helmet>
       <Layout>
         <div className="container mx-auto px-4 py-8">
@@ -85,7 +94,7 @@ const ProductDetail: React.FC = () => {
               {/* Main Image */}
               <div className="product-card aspect-square overflow-hidden">
                 {hasDiscount && (
-                  <div className="discount-badge z-10">-{product.discount_percentage}%</div>
+                  <div className="discount-badge z-10">-{discountPercentage}%</div>
                 )}
                 {product.promotion_text && (
                   <div className="absolute top-4 right-4 z-10 px-3 py-1 bg-primary/90 text-primary-foreground text-xs font-bold rounded-full">
@@ -105,9 +114,8 @@ const ProductDetail: React.FC = () => {
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
-                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                      selectedImageIndex === index ? 'border-primary' : 'border-border hover:border-muted-foreground'
-                    }`}
+                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImageIndex === index ? 'border-primary' : 'border-border hover:border-muted-foreground'
+                      }`}
                   >
                     <img src={img} alt={`View ${index + 1}`} className="w-full h-full object-cover" />
                   </button>
@@ -125,12 +133,12 @@ const ProductDetail: React.FC = () => {
               {/* Price */}
               <div className="flex items-baseline gap-3">
                 {hasDiscount && (
-                  <span className="price-original text-xl">${product.price.toFixed(2)}</span>
+                  <span className="price-original text-xl">${price.toFixed(2)}</span>
                 )}
                 <span className="text-4xl font-bold text-primary">${discountedPrice.toFixed(2)}</span>
                 {hasDiscount && (
                   <span className="px-2 py-1 bg-accent text-accent-foreground text-sm font-bold rounded">
-                    Save ${(product.price - discountedPrice).toFixed(2)}
+                    Save ${(price - discountedPrice).toFixed(2)}
                   </span>
                 )}
               </div>

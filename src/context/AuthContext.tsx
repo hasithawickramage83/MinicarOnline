@@ -27,14 +27,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Check if user is authenticated on mount
     if (api.isAuthenticated()) {
       setIsAuthenticated(true);
-      // In a real app, you'd fetch user details here
+      // Note: Removed getCurrentUser call as endpoint doesn't exist
+      // User data will be set during login if needed
     }
   }, []);
 
   const login = async (username: string, password: string) => {
     await api.login(username, password);
     setIsAuthenticated(true);
-    // Mock user data - in real app, fetch from API
+    // Set minimal user data since getCurrentUser endpoint doesn't exist
     setUser({ id: 1, username, email: '', first_name: '', last_name: '' });
   };
 

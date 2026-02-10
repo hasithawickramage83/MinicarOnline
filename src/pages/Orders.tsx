@@ -76,7 +76,7 @@ const Orders: React.FC = () => {
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Total</p>
-                        <p className="font-semibold text-primary">${order.total.toFixed(2)}</p>
+                        <p className="font-semibold text-primary">${Number(order.total).toFixed(2)}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1 bg-background rounded-full">
@@ -95,7 +95,7 @@ const Orders: React.FC = () => {
                           <p className="font-medium">{item.name}</p>
                           <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                         </div>
-                        <p className="font-semibold">${item.price.toFixed(2)}</p>
+                        <p className="font-semibold">${Number(item.price).toFixed(2)}</p>
                       </div>
                     ))}
                   </div>

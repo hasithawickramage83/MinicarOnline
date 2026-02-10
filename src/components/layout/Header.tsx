@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Menu, X, Search, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,9 +7,17 @@ import { useAuth } from '@/context/AuthContext';
 
 const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
   const { itemCount } = useCart();
-  const { isAuthenticated, logout, isAdmin } = useAuth();
+  const { isAuthenticated, logout, isAdmin, user } = useAuth();
   const navigate = useNavigate();
+
+  console.log('Header - itemCount:', itemCount, 'isAuthenticated:', isAuthenticated);
+
+  // Force re-render when auth state changes
+  useEffect(() => {
+    setForceUpdate(prev => prev + 1);
+  }, [isAuthenticated]);
 
   const handleLogout = () => {
     logout();
@@ -54,6 +62,10 @@ const Header: React.FC = () => {
 
             {isAuthenticated ? (
               <div className="hidden md:flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/50 rounded-full">
+                  <User className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">{useAuth().user?.username || useAuth().user?.first_name || 'User'}</span>
+                </div>
                 <Link to="/orders">
                   <Button variant="ghost" size="sm">My Orders</Button>
                 </Link>

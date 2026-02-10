@@ -1,5 +1,5 @@
 // API Configuration - Connect to Django Backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://django-postgres-docker.onrender.com/api';
 
 // Types
 export interface User {
@@ -21,6 +21,7 @@ export interface Product {
   promotion_text: string;
   product_model: string;
   product_dimension: string;
+  is_active: string;
   images?: ProductImage[];
   created_at?: string;
 }
@@ -89,7 +90,7 @@ export const api = {
   },
 
   async login(username: string, password: string): Promise<AuthTokens> {
-    const response = await fetch(`${API_BASE_URL}/login`, {
+    const response = await fetch(`${API_BASE_URL}/login/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
@@ -109,13 +110,22 @@ export const api = {
     localStorage.removeItem('refresh_token');
   },
 
+
   isAuthenticated(): boolean {
     return !!localStorage.getItem('access_token');
   },
 
+  async getCurrentUser(): Promise<User> {
+    const response = await fetch(`${API_BASE_URL}/user/me/`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch user');
+    return response.json();
+  },
+
   // Products
   async getProducts(): Promise<Product[]> {
-    const response = await fetch(`${API_BASE_URL}/products`, {
+    const response = await fetch(`${API_BASE_URL}/products/`, {
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch products');
@@ -123,31 +133,85 @@ export const api = {
   },
 
   async getProduct(id: number): Promise<Product> {
-    const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/products/${id}/`, {
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch product');
     return response.json();
   },
+async createProduct(data: Partial<Product>, images?: File[]): Promise<Product> {
+  const formData = new FormData();
 
-  async createProduct(data: Partial<Product>): Promise<Product> {
-    const response = await fetch(`${API_BASE_URL}/products/`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error('Failed to create product');
-    return response.json();
-  },
+  // Add product data
+  Object.keys(data).forEach(key => {
+    if (data[key as keyof Product] !== undefined) {
+      formData.append(key, String(data[key as keyof Product]));
+    }
+  });
 
-  async updateProduct(id: number, data: Partial<Product>): Promise<Product> {
-    const response = await fetch(`${API_BASE_URL}/products/${id}/`, {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
+  // Add images if provided
+  if (images && images.length > 0) {
+    images.forEach((image) => {
+      formData.append('images_upload', image); // <-- must match serializer field
     });
-    if (!response.ok) throw new Error('Failed to update product');
-    return response.json();
+  }
+
+  const response = await fetch(`${API_BASE_URL}/products/`, {
+    method: 'POST',
+    headers: {
+      ...(localStorage.getItem('access_token') && { 
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}` 
+      }),
+      // Do NOT set Content-Type manually for FormData
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.detail || 'Failed to create product');
+  }
+
+  return response.json();
+},
+
+  async updateProduct(id: number, data: Partial<Product>, images?: File[]): Promise<Product> {
+    // If images are provided, use FormData
+    if (images && images.length > 0) {
+      const formData = new FormData();
+      
+      // Add product data
+      Object.keys(data).forEach(key => {
+        if (data[key as keyof Product] !== undefined) {
+          formData.append(key, String(data[key as keyof Product]));
+        }
+      });
+      
+      // Add images
+      images.forEach((image) => {
+        formData.append('images_upload', image);
+      });
+
+      const response = await fetch(`${API_BASE_URL}/products/${id}/`, {
+        method: 'PUT',
+        headers: {
+          // Don't set Content-Type for FormData - browser sets it with boundary
+          ...(localStorage.getItem('access_token') && { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }),
+        },
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Failed to update product');
+      return response.json();
+    } else {
+      // Use JSON for regular data updates
+      const response = await fetch(`${API_BASE_URL}/products/${id}/`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to update product');
+      return response.json();
+    }
   },
 
   async deleteProduct(id: number): Promise<void> {
@@ -160,10 +224,13 @@ export const api = {
 
   // Cart
   async getCart(): Promise<Cart> {
-    const response = await fetch(`${API_BASE_URL}/cart`, {
+    const response = await fetch(`${API_BASE_URL}/orders/cart/`, {
       headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch cart');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Failed to fetch cart (${response.status}: ${response.statusText})`);
+    }
     return response.json();
   },
 
@@ -179,7 +246,7 @@ export const api = {
 
   // Orders
   async checkout(): Promise<Order> {
-    const response = await fetch(`${API_BASE_URL}/orders/checkout`, {
+    const response = await fetch(`${API_BASE_URL}/orders/checkout/`, {
       method: 'POST',
       headers: getAuthHeaders(),
     });
@@ -188,7 +255,7 @@ export const api = {
   },
 
   async getOrders(): Promise<Order[]> {
-    const response = await fetch(`${API_BASE_URL}/orders`, {
+    const response = await fetch(`${API_BASE_URL}/orders/`, {
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error('Failed to fetch orders');

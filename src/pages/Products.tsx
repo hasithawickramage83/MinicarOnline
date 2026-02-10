@@ -1,17 +1,39 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import Layout from '@/components/layout/Layout';
 import ProductCard from '@/components/products/ProductCard';
 import ModelFilter from '@/components/products/ModelFilter';
-import { mockProducts } from '@/data/mockProducts';
-import { Search } from 'lucide-react';
+import { api, Product } from '@/lib/api';
+import { Search, Loader2, AlertCircle } from 'lucide-react';
 
 const Products: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialModel = searchParams.get('model') || 'All';
   const [selectedModel, setSelectedModel] = useState(initialModel);
   const [searchQuery, setSearchQuery] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch products from API on component mount
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await api.getProducts();
+        setProducts(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load products');
+        console.error('Error fetching products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const handleModelChange = (model: string) => {
     setSelectedModel(model);
@@ -24,20 +46,20 @@ const Products: React.FC = () => {
   };
 
   const filteredProducts = useMemo(() => {
-    return mockProducts.filter((product) => {
+    return products.filter((product) => {
       const matchesModel = selectedModel === 'All' || product.product_model === selectedModel;
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesModel && matchesSearch;
     });
-  }, [selectedModel, searchQuery]);
+  }, [products, selectedModel, searchQuery]);
 
   return (
     <>
       <Helmet>
-        <title>{selectedModel === 'All' ? 'All Products' : `${selectedModel} Models`} | MiniWheels Diecast Cars</title>
-        <meta name="description" content={`Browse our collection of premium ${selectedModel === 'All' ? '' : selectedModel + ' '}1:18 scale diecast model cars. Authentic replicas with stunning detail.`} />
-        <meta name="keywords" content={`${selectedModel} diecast, ${selectedModel} model car, 1:18 scale, diecast collection, premium model cars`} />
+        <title>Products | MiniWheels Diecast Cars</title>
+        <meta name="description" content="Browse our collection of premium 1:18 scale diecast model cars. Authentic replicas with stunning detail." />
+        <meta name="keywords" content="diecast cars, model cars, 1:18 scale, diecast collection, premium model cars" />
       </Helmet>
       <Layout>
         {/* Header */}
@@ -45,10 +67,10 @@ const Products: React.FC = () => {
           <div className="container mx-auto px-4 text-center">
             <p className="text-accent font-semibold mb-2">Premium Collection</p>
             <h1 className="section-title text-5xl md:text-6xl mb-6">
-              {selectedModel === 'All' ? 'ALL PRODUCTS' : `${selectedModel.toUpperCase()} COLLECTION`}
+              {selectedModel === 'All' ? 'ALL PRODUCTS' : `${selectedModel?.toUpperCase() || 'PRODUCTS'} COLLECTION`}
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Explore our curated selection of premium diecast scale models. 
+              Explore our curated selection of premium diecast scale models.
               Each piece is crafted with exceptional attention to detail.
             </p>
           </div>
@@ -72,29 +94,57 @@ const Products: React.FC = () => {
               </div>
 
               {/* Model Filter */}
-              <ModelFilter 
-                selectedModel={selectedModel} 
-                onModelChange={handleModelChange} 
+              <ModelFilter
+                selectedModel={selectedModel}
+                onModelChange={handleModelChange}
               />
             </div>
 
+            {/* Loading State */}
+            {loading && (
+              <div className="flex justify-center items-center py-20">
+                <Loader2 className="w-12 h-12 text-accent animate-spin" />
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && !loading && (
+              <div className="flex flex-col items-center justify-center py-20">
+                <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
+                <h3 className="text-2xl font-heading text-foreground mb-2">Failed to Load Products</h3>
+                <p className="text-muted-foreground mb-4">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="btn-primary"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+
             {/* Results Count */}
-            <p className="text-center text-muted-foreground mb-8">
-              Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
-            </p>
+            {!loading && !error && (
+              <p className="text-center text-muted-foreground mb-8">
+                Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+              </p>
+            )}
 
             {/* Products Grid */}
-            {filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-20">
-                <p className="text-2xl font-heading text-muted-foreground">No products found</p>
-                <p className="text-muted-foreground mt-2">Try adjusting your search or filter</p>
-              </div>
+            {!loading && !error && (
+              <>
+                {filteredProducts.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-20">
+                    <p className="text-2xl font-heading text-muted-foreground">No products found</p>
+                    <p className="text-muted-foreground mt-2">Try adjusting your search or filter</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </section>

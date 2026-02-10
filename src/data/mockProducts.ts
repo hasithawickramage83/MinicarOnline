@@ -11,6 +11,7 @@ export const mockProducts: Product[] = [
     promotion_text: 'Limited Edition',
     product_model: 'Ferrari',
     product_dimension: '25 cm',
+    is_active: 'active',
   },
   {
     id: 2,
@@ -22,6 +23,7 @@ export const mockProducts: Product[] = [
     promotion_text: '',
     product_model: 'Porsche',
     product_dimension: '24 cm',
+    is_active: 'active',
   },
   {
     id: 3,
@@ -33,6 +35,7 @@ export const mockProducts: Product[] = [
     promotion_text: 'Hot Deal',
     product_model: 'Lamborghini',
     product_dimension: '26 cm',
+    is_active: 'active',
   },
   {
     id: 4,
@@ -44,6 +47,7 @@ export const mockProducts: Product[] = [
     promotion_text: 'New Arrival',
     product_model: 'BMW',
     product_dimension: '24 cm',
+    is_active: 'active',
   },
   {
     id: 5,
@@ -55,6 +59,7 @@ export const mockProducts: Product[] = [
     promotion_text: '',
     product_model: 'Mercedes',
     product_dimension: '25 cm',
+    is_active: 'active',
   },
   {
     id: 6,
@@ -66,6 +71,7 @@ export const mockProducts: Product[] = [
     promotion_text: '',
     product_model: 'Audi',
     product_dimension: '24 cm',
+    is_active: 'active',
   },
   {
     id: 7,
@@ -77,6 +83,7 @@ export const mockProducts: Product[] = [
     promotion_text: 'Collector\'s Choice',
     product_model: 'McLaren',
     product_dimension: '25 cm',
+    is_active: 'active',
   },
   {
     id: 8,
@@ -88,6 +95,7 @@ export const mockProducts: Product[] = [
     promotion_text: '',
     product_model: 'Toyota',
     product_dimension: '24 cm',
+    is_active: 'active',
   },
   {
     id: 9,
@@ -99,6 +107,7 @@ export const mockProducts: Product[] = [
     promotion_text: 'Fan Favorite',
     product_model: 'Nissan',
     product_dimension: '24 cm',
+    is_active: 'active',
   },
   {
     id: 10,
@@ -110,9 +119,10 @@ export const mockProducts: Product[] = [
     promotion_text: '',
     product_model: 'Ford',
     product_dimension: '25 cm',
+    is_active: 'active',
   },
   {
-    id: 11,
+    id: 40,
     name: 'Chevrolet Corvette C8 Z06 1:18 Scale',
     description: 'Stunning 1:18 scale representation of the mid-engine Chevrolet Corvette C8 Z06. Features the revolutionary design that changed American sports cars forever.',
     price: 164.99,
@@ -121,9 +131,10 @@ export const mockProducts: Product[] = [
     promotion_text: 'New Model',
     product_model: 'Chevrolet',
     product_dimension: '24 cm',
+    is_active: 'active',
   },
   {
-    id: 12,
+    id: 39,
     name: 'Bugatti Chiron Super Sport 1:18 Scale',
     description: 'Ultra-premium 1:18 scale model of the Bugatti Chiron Super Sport. Represents the pinnacle of automotive engineering with exquisite detail and craftsmanship.',
     price: 299.99,
@@ -132,6 +143,7 @@ export const mockProducts: Product[] = [
     promotion_text: 'Ultra Premium',
     product_model: 'Bugatti',
     product_dimension: '27 cm',
+    is_active: 'active',
   },
 ];
 
