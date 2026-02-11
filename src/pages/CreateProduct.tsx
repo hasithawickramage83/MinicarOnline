@@ -16,7 +16,7 @@ interface ProductFormData {
   promotion_text: string;
   product_model: string;
   product_dimension: string;
-  is_active: string;
+  is_active: boolean;
 }
 
 const CreateProduct: React.FC = () => {
@@ -34,7 +34,7 @@ const CreateProduct: React.FC = () => {
     promotion_text: '',
     product_model: '',
     product_dimension: '',
-    is_active: 'active'
+    is_active: true
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -96,7 +96,8 @@ alert(images.length )
         discount_percentage: formData.discount_percentage,
         promotion_text: formData.promotion_text,
         product_model: formData.product_model,
-        product_dimension: formData.product_dimension
+        product_dimension: formData.product_dimension,
+        is_active:formData.is_active
       };
 
       // Create product with images

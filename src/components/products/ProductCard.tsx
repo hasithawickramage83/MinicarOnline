@@ -4,7 +4,7 @@ import { ShoppingCart, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/lib/api';
 import { useCart } from '@/context/CartContext';
-import { getProductImage } from '@/lib/productImages';
+// import { getProductImage } from '@/lib/productImages';
 import { toast } from 'sonner';
 
 interface ProductCardProps {
@@ -49,7 +49,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Image */}
         <div className="relative aspect-square overflow-hidden">
           <img
-            src={getProductImage(product.product_model)}
+          src={product.images?.[0]?.image}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />

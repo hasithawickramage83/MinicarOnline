@@ -1,32 +1,61 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, ShoppingCart, Minus, Plus, Check, Truck, Shield, RotateCcw } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import ProductCard from '@/components/products/ProductCard';
-import { mockProducts } from '@/data/mockProducts';
 import { useCart } from '@/context/CartContext';
-import { getProductImage } from '@/lib/productImages';
 import { toast } from 'sonner';
+import { api, Product } from '@/lib/api';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const product = useMemo(() => {
-    return mockProducts.find(p => p.id === Number(id));
+  // Fetch product and related products
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        if (!id) return;
+
+        const prod = await api.getProduct(Number(id));
+        setProduct(prod);
+
+        // Fetch all products for related ones
+        const allProducts = await api.getProducts();
+        const related = allProducts
+          .filter(p => p.product_model === prod.product_model && p.id !== prod.id)
+          .slice(0, 4);
+
+        setRelatedProducts(related);
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to fetch product');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
   }, [id]);
 
-  const relatedProducts = useMemo(() => {
-    if (!product) return [];
-    return mockProducts
-      .filter(p => p.product_model === product.product_model && p.id !== product.id)
-      .slice(0, 4);
-  }, [product]);
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-20 text-center">
+          <p className="text-lg">Loading product details...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!product) {
     return (
@@ -46,16 +75,18 @@ const ProductDetail: React.FC = () => {
   const discountPercentage = Number(product.discount_percentage);
   const discountedPrice = price * (1 - discountPercentage / 100);
   const hasDiscount = discountPercentage > 0;
-  const productImage = getProductImage(product.product_model);
 
-  // Mock multiple images
-  const images = [productImage, productImage, productImage];
+  // Use product images from API
+  const images = product.images && product.images.length > 0
+    ? product.images.map(img => img.image)
+    : ['/placeholder.png']; // fallback image
 
   const handleAddToCart = async () => {
     try {
       await addToCart(product, quantity);
-    } catch (error) {
-      // Error is handled in the context
+      toast.success('Added to cart!');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to add to cart');
     }
   };
 
@@ -63,8 +94,8 @@ const ProductDetail: React.FC = () => {
     try {
       await addToCart(product, quantity);
       navigate('/cart');
-    } catch (error) {
-      // Error is handled in the context
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to buy now');
     }
   };
 
@@ -73,10 +104,10 @@ const ProductDetail: React.FC = () => {
       <Helmet>
         <title>Product Detail | MiniWheels Diecast Cars</title>
         <meta name="description" content="Product details for MiniWheels diecast cars" />
-        <meta name="keywords" content="diecast cars, model cars, 1:18 scale, diecast collectible" />
         <meta property="og:title" content="Product Detail" />
         <meta property="og:description" content="Product details for MiniWheels diecast cars" />
       </Helmet>
+
       <Layout>
         <div className="container mx-auto px-4 py-8">
           {/* Breadcrumb */}
@@ -114,8 +145,7 @@ const ProductDetail: React.FC = () => {
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
-                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImageIndex === index ? 'border-primary' : 'border-border hover:border-muted-foreground'
-                      }`}
+                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImageIndex === index ? 'border-primary' : 'border-border hover:border-muted-foreground'}`}
                   >
                     <img src={img} alt={`View ${index + 1}`} className="w-full h-full object-cover" />
                   </button>

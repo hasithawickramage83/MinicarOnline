@@ -3,6 +3,7 @@
     import { Navigate, useNavigate } from 'react-router-dom';
     import { Package, Plus, Edit, Trash2, ShoppingBag, Loader2, Upload, X } from 'lucide-react';
     import Layout from '@/components/layout/Layout';
+    import { Switch } from "@/components/ui/switch"; // adjust path if needed
     import { Button } from '@/components/ui/button';
     import { useAuth } from '@/context/AuthContext';
     import { api, Product, ProductImage } from '@/lib/api';
@@ -326,7 +327,7 @@
         promotion_text: product?.promotion_text || '',
         product_model: product?.product_model || 'Ferrari',
         product_dimension: product?.product_dimension || '24 cm',
-        is_active: product?.is_active ?? 'active',
+        is_active: product?.is_active ?? true
       });
       const [images, setImages] = useState<File[]>([]);
       const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -463,6 +464,17 @@
                 className="input-styled"
               />
             </div>
+           <div className="flex items-center gap-2">
+  <label className="block text-sm font-medium">Active</label>
+  <Switch
+    checked={formData.is_active} // bind to formData
+    onCheckedChange={(checked) =>
+      setFormData({ ...formData, is_active: checked as boolean })
+    }
+  />
+</div>
+
+
           </div>
           
           {/* Image Upload Section */}

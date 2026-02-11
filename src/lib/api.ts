@@ -21,7 +21,7 @@ export interface Product {
   promotion_text: string;
   product_model: string;
   product_dimension: string;
-  is_active: string;
+  is_active: boolean;
   images?: ProductImage[];
   created_at?: string;
 }
