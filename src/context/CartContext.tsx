@@ -143,6 +143,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const removeFromCart = async (productId: number) => {
+    alert('')
     if (!api.isAuthenticated()) {
       toast.error('Please sign in to manage cart');
       return;
@@ -152,6 +153,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsLoading(true);
       // Note: API doesn't seem to have a remove endpoint, so we'll refresh cart
       // This might need to be implemented in the backend
+      await api.removeFromCart(productId);
       await refreshCart();
       toast.success('Item removed from cart');
     } catch (error) {
