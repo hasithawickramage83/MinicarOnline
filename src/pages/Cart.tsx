@@ -114,7 +114,8 @@ const Cart: React.FC = () => {
                     {/* Image */}
                     <Link to={`/products/${item.product.id}`} className="w-24 h-24 rounded-lg overflow-hidden shrink-0">
                       <img
-                        src={getProductImage(item.product.product_model)}
+                       src={item.product.images?.[0]?.image}
+                        
                         alt={item.product.name}
                         className="w-full h-full object-cover"
                       />
