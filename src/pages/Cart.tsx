@@ -156,14 +156,14 @@ const Cart: React.FC = () => {
                           {/* MINUS */}
                           <button
                             onClick={() =>{
-                                const updtQty= item.quantity-(item.quantity-1)
+                                const updtQty=  item.quantity-1
                                 
-                                if (updtQty==1)
+                                if (updtQty==0)
                                 { 
                                    removeFromCart(item.id)
                                    return
                                 }
-                              updateQuantity(item.product.id,updtQty,0)
+                              updateQuantity(item.product.id,1,0)
                             }}
                             className="w-8 h-8 rounded bg-secondary flex items-center justify-center"
                           >
