@@ -4,15 +4,19 @@ import api from '@/lib/api';
 import { toast } from 'sonner';
 
 interface CartItem {
+    id: number;   // ⭐⭐⭐ ADD THIS LINE
   product: Product;
   quantity: number;
+  price?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface CartContextType {
   items: CartItem[];
   addToCart: (product: Product, quantity?: number) => Promise<void>;
   removeFromCart: (productId: number) => Promise<void>;
-  updateQuantity: (productId: number, quantity: number) => Promise<void>;
+  updateQuantity: (productId: number, quantity: number,updateType:number) => Promise<void>;
   clearCart: () => Promise<void>;
   refreshCart: () => Promise<void>;
   total: number;
@@ -77,6 +81,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const transformedItems: CartItem[] = cart.items.map((item: ApiCartItem) => {
         console.log('Processing item:', item);
         return {
+          id: item.id,  
           product: item.product,
           quantity: item.quantity
         };
@@ -143,7 +148,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const removeFromCart = async (productId: number) => {
-    alert('')
     if (!api.isAuthenticated()) {
       toast.error('Please sign in to manage cart');
       return;
@@ -164,7 +168,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const updateQuantity = async (productId: number, quantity: number) => {
+  const updateQuantity = async (productId: number, quantity: number,updateType:number) => {
     if (!api.isAuthenticated()) {
       toast.error('Please sign in to manage cart');
       return;
@@ -175,11 +179,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
 
+
     try {
       setIsLoading(true);
       // Note: API doesn't seem to have an update quantity endpoint
       // We'll need to add the item again or this needs to be implemented in backend
+    if (updateType==1)
       await api.addToCart(productId, quantity);
+    else 
+      await api.reduceFromCart(productId,quantity);
       await refreshCart();
     } catch (error) {
       console.error('Failed to update quantity:', error);

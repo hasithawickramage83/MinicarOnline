@@ -1,5 +1,5 @@
 // API Configuration - Connect to Django Backend
-//const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api ';
+//const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://django-postgres-docker.onrender.com/api';
 
 // Types
@@ -243,6 +243,25 @@ async createProduct(data: Partial<Product>, images?: File[]): Promise<Product> {
     });
     if (!response.ok) throw new Error('Failed to add to cart');
     return response.json();
+  },
+  
+  async reduceFromCart(productId: number, quantity: number): Promise<CartItem> {
+    const response = await fetch(`${API_BASE_URL}/orders/cart/reduce/`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ product_id: productId, quantity }),
+    });
+    if (!response.ok) throw new Error('Failed to reduce from cart');
+    return response.json();
+  },
+  
+  async removeFromCart(id: number): Promise<void> {
+    alert(id)
+    const response = await fetch(`${API_BASE_URL}/orders/cart/remove/${id}/`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to delete cart item');
   },
 
   // Orders
