@@ -77,8 +77,7 @@ const CreateProduct: React.FC = () => {
     if (!formData.name || !formData.description || !formData.product_model || !formData.product_dimension) {
       toast.error('Please fill in all required fields');
       return;
-    }
-alert(images.length )
+    } 
     if (images.length === 0) {
       toast.error('Please add at least one product image');
       return;

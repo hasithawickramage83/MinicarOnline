@@ -255,8 +255,7 @@ async createProduct(data: Partial<Product>, images?: File[]): Promise<Product> {
     return response.json();
   },
   
-  async removeFromCart(id: number): Promise<void> {
-    alert(id)
+  async removeFromCart(id: number): Promise<void> { 
     const response = await fetch(`${API_BASE_URL}/orders/cart/remove/${id}/`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
